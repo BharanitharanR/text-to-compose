@@ -1,0 +1,24 @@
+# listener-profile.yaml
+# Copy this beside the skill, into the project, or into the working directory.
+# The composer reads it before every song and offers one line to add after you react.
+# Only things you said or confirmed go here. Never inferred moods, never health or hard circumstances.
+
+name: ""
+languages: []                  # e.g. [Tamil, English]
+instruments_loved: []          # e.g. [morin khuur, Carnatic violin, pedal steel]
+instruments_avoided: []        # e.g. [drum kit, saxophone]
+voices_that_feel_like_home: [] # e.g. ["older female alto, Tamil", "dry baritone narrator"]
+worlds_loved: []               # e.g. [Carnatic, Celtic air, 70s country]
+worlds_avoided: []
+lifts_me: []                   # palettes that lift: e.g. [bright pentatonic, kora ostinato, fast jig]
+sits_with_me: []               # palettes that keep company: e.g. [tanpura drone, slow air, shakuhachi]
+tempo_notes: ""                # e.g. "prefers slower than I'd guess"
+narration_notes: ""            # e.g. "likes the narrator to be a stranger, not the singer"
+
+past_songs:
+  # - title: "River at Dusk"
+  #   date: 2026-11-16
+  #   world: "Carnatic with a Celtic fiddle"
+  #   mood_in: "quiet"
+  #   mood_out: "lifted a step"
+  #   reaction: "favourite so far; wanted the conclusion longer"
