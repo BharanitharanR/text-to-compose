@@ -122,3 +122,19 @@ For local reference rendering, a SongSpec must contain a low-level score.tracks 
     python scripts/render_song_spec.py song-spec.json --out outputs/
 
 The local renderer remains a reference renderer; the Suno adapter is the path intended for full vocal generation.
+
+
+### Eleven Music provider
+
+Eleven Music is supported as a real API provider in addition to the Suno MCP placeholder.
+
+Dry-run without credentials:
+
+    python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --print
+
+Generate with an ElevenLabs API key:
+
+    export ELEVENLABS_API_KEY="..."
+    python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --generate
+
+The adapter targets Eleven Music v2.5 and translates SongSpec sections into a structured composition plan. The Music API is paid and the applicable commercial rights depend on the ElevenLabs plan and Music Terms.
