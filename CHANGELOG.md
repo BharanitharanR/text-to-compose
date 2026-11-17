@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 — 2026-11-17
+
+- Clarified Eleven Music Free website availability versus Music API access.
+- Added PAYG-aware provider guidance for Eleven Music API access.
+- Added an Eleven Music capability matrix.
+- Updated provider-selection guidance to separate capability, access, payment, and licensing.
+- Corrected the provider documentation so a paid subscription is not described as the only possible route to API access.
+
 ## 1.2.0 — 2026-11-17
 
 - Added Eleven Music provider adapter targeting the Eleven Music v2.5 API.
