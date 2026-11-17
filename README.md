@@ -20,6 +20,9 @@ text-to-compose/
 ├── LICENSE
 ├── README.md
 ├── requirements.txt
+├── schemas/
+├── examples/
+├── providers/
 ├── assets/
 ├── references/
 └── scripts/
