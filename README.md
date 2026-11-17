@@ -99,3 +99,23 @@ The MIT license permits commercial use, modification, and redistribution subject
 This package targets the Agent Skills directory format and keeps runtime-specific assumptions out of the skill instructions.
 
 Compatibility with a particular agent depends on that agent supporting the Agent Skills format and on its own policies around script execution, file access, and external tools.
+
+## SongSpec and provider adapters
+
+SongSpec is now the canonical provider-neutral representation of a song. See schemas/song-spec.schema.json and examples/song-spec.json.
+
+Validate locally:
+
+    python scripts/validate_song_spec.py examples/song-spec.json
+
+Prepare the Suno MCP placeholder request:
+
+    python scripts/suno_mcp.py examples/song-spec.json --out outputs --print
+
+This does not call Suno yet. It produces an inspectable structured request that an MCP-capable host can hand to the official Suno MCP integration.
+
+For local reference rendering, a SongSpec must contain a low-level score.tracks section. Then run:
+
+    python scripts/render_song_spec.py song-spec.json --out outputs/
+
+The local renderer remains a reference renderer; the Suno adapter is the path intended for full vocal generation.
