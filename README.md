@@ -1,6 +1,6 @@
 # Text to Song Composer
 
-**Portable Agent Skill — v1.2.0**
+**Portable Agent Skill — v1.3.0**
 
 Turn poems, stories, memories, diary entries, speeches, prayers, scenes, and other written text into an original song concept and playable musical artifacts.
 
@@ -105,7 +105,7 @@ Compatibility with a particular agent depends on that agent supporting the Agent
 
 ## SongSpec and provider adapters
 
-SongSpec is now the canonical provider-neutral representation of a song. See schemas/song-spec.schema.json and examples/song-spec.json.
+SongSpec is now the canonical provider-neutral representation of a song. See `schemas/song-spec.schema.json` and `examples/song-spec.json`.
 
 Validate locally:
 
@@ -117,24 +117,27 @@ Prepare the Suno MCP placeholder request:
 
 This does not call Suno yet. It produces an inspectable structured request that an MCP-capable host can hand to the official Suno MCP integration.
 
-For local reference rendering, a SongSpec must contain a low-level score.tracks section. Then run:
+For local reference rendering, a SongSpec must contain a low-level `score.tracks` section. Then run:
 
     python scripts/render_song_spec.py song-spec.json --out outputs/
 
 The local renderer remains a reference renderer; the Suno adapter is the path intended for full vocal generation.
 
-
 ### Eleven Music provider
 
 Eleven Music is supported as a real API provider in addition to the Suno MCP placeholder.
+
+Eleven Music is also available directly in the ElevenLabs website Free experience. That does **not** mean the Music API is free with a Free subscription. Current ElevenLabs documentation says the Music API is available to paid subscribers, while its PAYG documentation says PAYG can unlock otherwise-disabled APIs such as Music for Free accounts.
 
 Dry-run without credentials:
 
     python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --print
 
-Generate with an ElevenLabs API key:
+Generate with API access:
 
     export ELEVENLABS_API_KEY="..."
     python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --generate
 
-The adapter targets Eleven Music v2.5 and translates SongSpec sections into a structured composition plan. The Music API is paid and the applicable commercial rights depend on the ElevenLabs plan and Music Terms.
+The adapter targets Eleven Music v2.5 and translates SongSpec sections into a structured composition plan. API access and commercial rights depend on the current ElevenLabs subscription/PAYG configuration and Music Terms.
+
+See `providers/elevenlabs.md` for the capability matrix and provider-specific details.
