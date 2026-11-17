@@ -115,7 +115,7 @@ Then produce every one of these, so the user always gets something useful even w
 1. **SongSpec** in schemas/song-spec.schema.json: provider-neutral creative intent, lyrics, arrangement, capabilities, and optional low-level score.
 2. **MIDI** of the full arrangement, from scripts/render.py when score.tracks are available.
 3. **Instrumental WAV** from that MIDI: the script uses FluidSynth and a General MIDI SoundFont when present, otherwise its built-in numpy synth. Ambience and drone are rendered as layers.
-4. **Provider request**: compile the SongSpec into the selected provider's native request. The Suno MCP adapter is currently a placeholder at scripts/suno_mcp.py; it creates an inspectable request manifest and deliberately does not call Suno yet. A host with the official Suno MCP integration can execute the request.
+4. **Provider request**: compile the SongSpec into the selected provider's native request. The Suno MCP adapter is currently a placeholder at scripts/suno_mcp.py; it creates an inspectable request manifest and deliberately does not call Suno yet. A host with the official Suno MCP integration can execute the request. The Eleven Music adapter at scripts/elevenlabs_music.py can dry-run the same SongSpec or execute a real Eleven Music v2.5 API generation when ELEVENLABS_API_KEY is provided.
 5. **Generation prompt**: a structured fallback prompt for a music-generation model, built from references/generation-prompt.md.
 6. **Sung voice, if an engine exists**: check for a local singing or neural TTS engine before falling back. If one runs, drive it from the voice spec and pitch track and mix it over the instrumental. If none, say so plainly; do not ship a formant-synth voice as if it were a singer.
 
