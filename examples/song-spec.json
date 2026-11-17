@@ -1,0 +1,31 @@
+{
+  "song_spec_version": "1.0",
+  "metadata": {"title": "River at Dusk", "language": "English", "tags": ["cinematic", "folk", "intimate"]},
+  "creative": {
+    "world": "A quiet river at dusk with distant bells and a lone traveler.",
+    "style": "Cinematic folk ballad with Indian acoustic colors",
+    "tempo": 72, "time_signature": [4, 4], "key_or_raga": "D minor",
+    "instruments": ["acoustic guitar", "violin", "tanpura", "soft frame drum"],
+    "vocals": {"required": true, "singer": "warm male baritone, intimate and breathy", "narrator": "warm older male voice, spoken", "language": "English", "range": "A2-E4", "technique": "light vibrato"},
+    "ending": "sustained open fifth fading into river ambience"
+  },
+  "lyrics": {
+    "approved": true,
+    "sections": [
+      {"name": "Prelude", "spoken": true, "text": "The river darkens as the last light leaves the hills."},
+      {"name": "Verse 1", "text": "The river carries every road away\nAnd leaves the evening in its place."},
+      {"name": "Chorus", "text": "Stay with the water, stay with the night."},
+      {"name": "Outro", "text": "Stay with the water."}
+    ]
+  },
+  "arrangement": {
+    "motif": "D-F-E-D",
+    "sections": [
+      {"name": "Prelude", "start_beat": 0, "end_beat": 16, "purpose": "enter the world", "instruments": ["tanpura", "river ambience"]},
+      {"name": "Verse 1", "start_beat": 16, "end_beat": 48, "purpose": "tell the story", "instruments": ["acoustic guitar", "violin"]},
+      {"name": "Chorus", "start_beat": 48, "end_beat": 72, "purpose": "emotional lift", "instruments": ["guitar", "violin", "frame drum"]},
+      {"name": "Outro", "start_beat": 72, "end_beat": 88, "purpose": "return to the world", "instruments": ["tanpura", "violin"]}
+    ]
+  },
+  "providers": {"preferred": "suno-mcp", "requested_capabilities": ["full_song", "vocals", "lyrics", "instrumentation"]}
+}
