@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 — 2026-11-17
+
+- Added ACE-Step 1.5 as a supported local full-song provider.
+- Added a SongSpec-to-ACE-Step REST API adapter with dry-run and real generation modes.
+- Added ACE-Step provider documentation and macOS Apple Silicon setup instructions.
+- Added provider guidance for choosing local ACE-Step when hosted providers are unavailable.
+- Kept provider-specific execution outside the canonical SongSpec.
+
 ## 1.3.0 — 2026-11-17
 
 - Clarified Eleven Music Free website availability versus Music API access.
