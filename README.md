@@ -1,6 +1,6 @@
 # Text to Song Composer
 
-**Portable Agent Skill — v1.0.0**
+**Portable Agent Skill — v1.2.0**
 
 Turn poems, stories, memories, diary entries, speeches, prayers, scenes, and other written text into an original song concept and playable musical artifacts.
 
