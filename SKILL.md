@@ -6,7 +6,7 @@ compatibility: "Requires an Agent Skills-compatible runtime. Optional local rend
 metadata:
   vendor: "Bharanitharan Ragunathan"
   product: "Text to Song Composer"
-  version: "1.0.0"
+  version: "1.2.0"
 ---
 
 # Text to Song Composer
