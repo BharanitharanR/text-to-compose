@@ -1,6 +1,6 @@
 # Text to Song Composer
 
-**Portable Agent Skill — v1.3.0**
+**Portable Agent Skill — v1.4.0**
 
 Turn poems, stories, memories, diary entries, speeches, prayers, scenes, and other written text into an original song concept and playable musical artifacts.
 
@@ -18,7 +18,6 @@ text-to-compose/
 ├── VERSION
 ├── CHANGELOG.md
 ├── LICENSE
-├── README.md
 ├── requirements.txt
 ├── schemas/
 ├── examples/
@@ -30,114 +29,92 @@ text-to-compose/
 
 ## Install
 
-Copy or clone this directory into the skill directory supported by your AI agent.
-
-The exact installation location is host-specific. The skill package itself does not assume Claude, ChatGPT, Codex, Adiyan, or another particular agent.
-
-For an Agent Skills-compatible runtime:
-
-1. Make the `text-to-compose` directory available to the runtime's skills directory.
-2. Ensure `SKILL.md` is discoverable by the runtime.
-3. The agent should load the skill when the user's request matches its description.
+Copy or clone this directory into the skill directory supported by your AI agent. The exact installation location is host-specific.
 
 ## Optional local rendering
 
-The composition workflow can produce MIDI and WAV artifacts when the host agent permits local script execution.
-
-Python dependencies:
-
 ```bash
 python -m pip install -r requirements.txt
-```
-
-Then:
-
-```bash
 python scripts/render.py song.json --out outputs/
 python scripts/check_audio.py song.json outputs/song.wav --midi outputs/song.mid
 ```
 
-FluidSynth and a General MIDI SoundFont are optional. If unavailable, `render.py` uses its built-in synthesizer.
+## SongSpec and providers
 
-If the host agent cannot execute scripts, the skill still works for composition, score generation, arrangement, and generation-prompt creation; the agent should report that binary audio artifacts were not rendered.
+SongSpec 1.0 is the canonical provider-neutral representation.
 
-## Product boundary
+Validate:
 
-The portable package contains:
+```bash
+python scripts/validate_song_spec.py examples/song-spec.json
+```
 
-- composition instructions in `SKILL.md`
-- musical/cultural references
-- voice and mood guidance
-- rendering and verification scripts
-- templates/assets
+### Suno MCP
 
-The host agent provides:
+Suno MCP is an optional hosted provider. The account/host must have Suno MCP access. The skill can compile a SongSpec into an inspectable request manifest:
 
-- the language model
-- conversation/UI
-- file permissions
-- optional code execution
-- optional music-generation or singing tools
+```bash
+python scripts/suno_mcp.py examples/song-spec.json --out outputs --print
+```
 
-This separation is intentional so the skill can be distributed to multiple compatible agent runtimes.
+If the host cannot access Suno MCP, use another provider rather than changing SongSpec.
 
-## Versioning
+### ACE-Step 1.5 — free/local
 
-The package follows semantic versioning.
+ACE-Step 1.5 is the main local full-song provider. It can run on macOS Apple Silicon using the upstream MLX launcher and exposes a local REST API.
 
-- `VERSION` contains the current package version.
-- `CHANGELOG.md` records user-visible changes.
-- Releases should be tagged in Git as `vMAJOR.MINOR.PATCH`.
+Install the upstream engine:
 
-## License
+```bash
+git clone https://github.com/ACE-Step/ACE-Step-1.5.git
+cd ACE-Step-1.5
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync
+chmod +x start_api_server_macos.sh
+./start_api_server_macos.sh
+```
 
-MIT. See `LICENSE`.
+Default API: `http://127.0.0.1:8001`.
 
-## Commercial distribution
+From this repository, dry-run the adapter:
 
-The MIT license permits commercial use, modification, and redistribution subject to its terms. If you distribute proprietary additions, services, hosted APIs, or premium reference content alongside this package, license those components separately and make the boundary explicit.
+```bash
+python scripts/ace_step.py examples/song-spec.json --out outputs --print
+```
 
-## Compatibility
+Generate an actual song:
 
-This package targets the Agent Skills directory format and keeps runtime-specific assumptions out of the skill instructions.
+```bash
+python scripts/ace_step.py examples/song-spec.json --out outputs --generate
+```
 
-Compatibility with a particular agent depends on that agent supporting the Agent Skills format and on its own policies around script execution, file access, and external tools.
+Environment variables:
 
-## SongSpec and provider adapters
+```bash
+export ACESTEP_API_URL=http://127.0.0.1:8001
+# Only if your local ACE-Step server was configured with authentication:
+export ACESTEP_API_KEY=...
+```
 
-SongSpec is now the canonical provider-neutral representation of a song. See `schemas/song-spec.schema.json` and `examples/song-spec.json`.
+See `providers/ace-step.md` for the full setup and troubleshooting path.
 
-Validate locally:
+### Eleven Music
 
-    python scripts/validate_song_spec.py examples/song-spec.json
+Eleven Music remains an optional paid/programmatic provider. The adapter supports dry-run and API generation when API access is configured.
 
-Prepare the Suno MCP placeholder request:
+```bash
+python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --print
+```
 
-    python scripts/suno_mcp.py examples/song-spec.json --out outputs --print
+See `providers/elevenlabs.md`.
 
-This does not call Suno yet. It produces an inspectable structured request that an MCP-capable host can hand to the official Suno MCP integration.
+## Provider philosophy
 
-For local reference rendering, a SongSpec must contain a low-level `score.tracks` section. Then run:
+The skill separates:
 
-    python scripts/render_song_spec.py song-spec.json --out outputs/
+1. **Capability** — can the engine make what the user asked for?
+2. **Access** — can the host actually reach the engine?
+3. **Payment** — is generation free, paid, or credit-based?
+4. **Licensing** — can the resulting audio be used commercially?
 
-The local renderer remains a reference renderer; the Suno adapter is the path intended for full vocal generation.
-
-### Eleven Music provider
-
-Eleven Music is supported as a real API provider in addition to the Suno MCP placeholder.
-
-Eleven Music is also available directly in the ElevenLabs website Free experience. That does **not** mean the Music API is free with a Free subscription. Current ElevenLabs documentation says the Music API is available to paid subscribers, while its PAYG documentation says PAYG can unlock otherwise-disabled APIs such as Music for Free accounts.
-
-Dry-run without credentials:
-
-    python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --print
-
-Generate with API access:
-
-    export ELEVENLABS_API_KEY="..."
-    python scripts/elevenlabs_music.py examples/song-spec.json --out outputs --generate
-
-The adapter targets Eleven Music v2.5 and translates SongSpec sections into a structured composition plan. API access and commercial rights depend on the current ElevenLabs subscription/PAYG configuration and Music Terms.
-
-See `providers/elevenlabs.md` for the capability matrix and provider-specific details.
+The same SongSpec should move between providers without rewriting the composition logic.
