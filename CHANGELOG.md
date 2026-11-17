@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-11-17
+
+- Added Eleven Music provider adapter targeting the Eleven Music v2.5 API.
+- Added SongSpec-to-Eleven composition-plan translation.
+- Added local dry-run request generation and optional real API execution via ELEVENLABS_API_KEY.
+- Added Eleven Music provider documentation.
+- Kept Suno MCP as an optional placeholder provider.
+
 ## 1.1.0 — 2026-11-17
 
 - Added canonical provider-neutral SongSpec schema.
