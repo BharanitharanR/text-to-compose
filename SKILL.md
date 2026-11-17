@@ -6,7 +6,7 @@ compatibility: "Requires an Agent Skills-compatible runtime. Optional local rend
 metadata:
   vendor: "Bharanitharan Ragunathan"
   product: "Text to Song Composer"
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Text to Song Composer
@@ -119,7 +119,24 @@ Then produce every one of these, so the user always gets something useful even w
 5. **Generation prompt**: a structured fallback prompt for a music-generation model, built from references/generation-prompt.md.
 6. **Sung voice, if an engine exists**: check for a local singing or neural TTS engine before falling back. If one runs, drive it from the voice spec and pitch track and mix it over the instrumental. If none, say so plainly; do not ship a formant-synth voice as if it were a singer.
 
-Verify with `scripts/check_audio.py`: duration matches the plan, no clipping, no unplanned silence, notes match the score. Keep scripts in the working directory and deliverables in the outputs folder.
+### Provider selection
+
+Treat provider capabilities separately from provider access.
+
+For Eleven Music:
+
+- The **website Free experience** can generate music without an API key.
+- The **Music API** requires API access and an API key. ElevenLabs currently documents paid subscriptions as an API-access route and also documents PAYG as a way for Free accounts to unlock otherwise-disabled APIs.
+- Do not tell users that "Eleven Music is free" when the task requires programmatic API generation.
+- Do not tell users that a paid subscription is always required for API access; check the current ElevenLabs API/PAYG terms when making that claim.
+- Commercial rights are plan/terms dependent and must be checked before commercial distribution.
+
+For any provider, prefer this decision order:
+
+1. Can the provider satisfy the requested capabilities?
+2. Is the provider actually accessible in the host environment?
+3. What are the current usage, payment, and licensing constraints?
+4. Compile the same SongSpec into the provider-specific request.
 
 ### 9. Deliver and learn
 
