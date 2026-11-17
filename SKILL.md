@@ -98,7 +98,7 @@ Then produce every one of these, so the user always gets something useful even w
 1. **SongSpec** in schemas/song-spec.schema.json.
 2. **MIDI** of the full arrangement, from scripts/render.py when score.tracks are available.
 3. **Instrumental WAV** from that MIDI.
-4. **Provider request**: compile the SongSpec into the selected provider's native request.
+4. **Provider request**: compile the SongSpec into the selected provider's native request. ACE-Step (scripts/ace_step.py) sings but cannot speak: report any spoken narration as not rendered. See providers/ace-step.md.
 5. **Generation prompt**: a structured fallback prompt for a music-generation model.
 6. **Sung voice, if an engine exists**: check for a local singing or neural TTS engine before falling back. If one runs, drive it from the voice spec and pitch track and mix it over the instrumental. If none, say so plainly; do not ship a formant-synth voice as if it were a singer.
 
@@ -136,6 +136,8 @@ For Suno MCP:
 - The skill remains provider-neutral and must not require Suno.
 - A host with official Suno MCP access can execute a SongSpec-derived request.
 - If Suno MCP is unavailable for the user's account or host, do not treat that as a skill failure; continue to another available provider.
+
+ACE-Step limits to plan around: it sings full songs from a caption and section-tagged lyrics, but it cannot speak and takes no melody from the score.
 
 For Eleven Music:
 - The website Free experience can generate music without an API key.

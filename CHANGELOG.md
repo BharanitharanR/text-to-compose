@@ -7,6 +7,9 @@
 - Added ACE-Step provider documentation and macOS Apple Silicon setup instructions.
 - Added provider guidance for choosing local ACE-Step when hosted providers are unavailable.
 - Kept provider-specific execution outside the canonical SongSpec.
+- Added ACE-Step 1.5 local provider adapter (`scripts/ace_step.py`): dry-run request or real generation against a local ACE-Step API server, with seed, steps and duration control.
+- SongSpec mapping folds church modes to major/minor, keeps arrangement order (instrumental interludes included), compacts the caption, and reports spoken sections as not rendered.
+- Added `evals/` A/B harness comparing raw text sent straight to ACE-Step against the same text sent through the skill.
 
 ## 1.3.0 — 2026-11-17
 

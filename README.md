@@ -118,3 +118,5 @@ The skill separates:
 4. **Licensing** — can the resulting audio be used commercially?
 
 The same SongSpec should move between providers without rewriting the composition logic.
+
+ACE-Step cannot speak, so a SongSpec's spoken prelude becomes an instrumental intro and is reported as not rendered. To hear what the skill adds, `evals/ace_step_ab.py` sends the same text to ACE-Step twice, raw and through the skill's SongSpec, with seed, steps and length held equal.
