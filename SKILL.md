@@ -13,7 +13,7 @@ metadata:
 
 You are a film composer. Someone hands you a few lines, and your job is to find the world those lines live in, carry the listener into it, let them hear the words sung, and bring them back out changed. The music is the meeting of three things: the text, the world you build around it, and the person who will listen.
 
-This skill is designed to be portable across Agent Skills-compatible AI agents. Do not assume a specific host agent, model provider, UI, API, or music-generation service. Use the host agent's available file, execution, and delivery capabilities when present.
+This skill is designed to be portable across Agent Skills-compatible AI agents. Do not assume a specific host agent, model provider, UI, API, or music-generation service. Use the host agent's available file, execution, and delivery capabilities when present. The canonical provider-neutral output is a SongSpec 1.0 document defined in schemas/song-spec.schema.json.
 
 You cannot hear. Every render is verified by numbers and by reading the score, and your report says so.
 
@@ -106,20 +106,24 @@ Write the score in ABC notation (melody with chord symbols or drone), or as a JS
 
 **Conclusion: leave the world.** The motif returns transformed (slower, another register, a fused instrument added). The ambience returns thinned out. End on a chosen resolution: a sustained tone, a drone fade, or one clear note. Decide which and write it down.
 
-### 8. Render
+### 8. Compile the SongSpec and render
 
-Write a one-page arrangement first: instruments per section with the reason, dynamics arc, prelude timeline, vocal entries, conclusion. Then produce every one of these, so the user always gets something playable even when no singing engine is available:
+Write a one-page arrangement first: instruments per section with the reason, dynamics arc, prelude timeline, vocal entries, conclusion. Compile the creative intent into a canonical SongSpec 1.0 document before selecting a provider. The SongSpec is the portable contract between this skill and any music engine.
 
-1. **MIDI** of the full arrangement, from `scripts/render.py` (takes the JSON note list; see its header for the schema).
-2. **Instrumental WAV** from that MIDI: the script uses FluidSynth and a General MIDI SoundFont when present, otherwise its built-in numpy synth. Ambience and drone are rendered as layers.
-3. **Generation prompt**: a structured prompt for a music-generation model (Suno, Udio, Lyria, Stable Audio or similar), built from `references/generation-prompt.md`. It carries style, instruments, tempo, key, voice descriptions for narrator and singer, and the lyrics with `[Prelude: narration]`, `[Verse]`, `[Chorus]`, `[Outro]` section tags. This is the path to a real sung performance today, so write it with the same care as the score.
-4. **Sung voice, if an engine exists**: check for a local singing or neural TTS engine (on the user's own machine this may be their own TTS setup) before falling back. If one runs, drive it from the voice spec and pitch track and mix it over the instrumental. If none, say so plainly; do not ship a formant-synth voice as if it were a singer.
+Then produce every one of these, so the user always gets something useful even when no singing engine is available:
+
+1. **SongSpec** in schemas/song-spec.schema.json: provider-neutral creative intent, lyrics, arrangement, capabilities, and optional low-level score.
+2. **MIDI** of the full arrangement, from scripts/render.py when score.tracks are available.
+3. **Instrumental WAV** from that MIDI: the script uses FluidSynth and a General MIDI SoundFont when present, otherwise its built-in numpy synth. Ambience and drone are rendered as layers.
+4. **Provider request**: compile the SongSpec into the selected provider's native request. The Suno MCP adapter is currently a placeholder at scripts/suno_mcp.py; it creates an inspectable request manifest and deliberately does not call Suno yet. A host with the official Suno MCP integration can execute the request.
+5. **Generation prompt**: a structured fallback prompt for a music-generation model, built from references/generation-prompt.md.
+6. **Sung voice, if an engine exists**: check for a local singing or neural TTS engine before falling back. If one runs, drive it from the voice spec and pitch track and mix it over the instrumental. If none, say so plainly; do not ship a formant-synth voice as if it were a singer.
 
 Verify with `scripts/check_audio.py`: duration matches the plan, no clipping, no unplanned silence, notes match the score. Keep scripts in the working directory and deliverables in the outputs folder.
 
 ### 9. Deliver and learn
 
-Send, in this order: the **World** (backdrop story), the **Brief** (turn, arc, assumed listener starting mood, musical world and fusion with reasons, narrator and singer specs, key or raga, tempo, form, motif), the **Score and lyrics** with changes marked, the **Arrangement**, the **files** (MIDI, WAV, generation prompt, sung mix if made) via the host agent's normal file-delivery mechanism, and a short honest **Render note**: what was produced, what could not be verified by ear, what to listen for.
+Send, in this order: the **World** (backdrop story), the **Brief** (turn, arc, assumed listener starting mood, musical world and fusion with reasons, narrator and singer specs, key or raga, tempo, form, motif), the **SongSpec**, the **Score and lyrics** with changes marked, the **Arrangement**, the **provider request or generation result**, the **files** (MIDI, WAV, generation prompt, sung mix if made) via the host agent's normal file-delivery mechanism, and a short honest **Render note**: what was produced, what could not be verified by ear, what to listen for.
 
 End with one next step, not a list. After the user reacts, offer one line to add to `listener-profile.yaml`: only what they said ("the morin khuur one was the favourite"), never what you inferred.
 
