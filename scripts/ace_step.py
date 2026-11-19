@@ -80,7 +80,9 @@ def key_scale(text):
     raga = next((r for r in RAGA_MODES if r in low), None)
     if raga:
         sa = re.search(r"\bsa\s*=\s*([A-G])([#b♯♭]?)", text, re.I)
-        return f"{sa.group(1).upper()}{sa.group(2)} {RAGA_MODES[raga]}" if sa else ""
+        if sa:
+            return f"{sa.group(1).upper()}{sa.group(2)} {RAGA_MODES[raga]}"
+        # No tonic named: fall through, a leading "D mixolydian ..." still gives a key.
     m = re.match(r"^\s*([A-Ga-g])([#b♯♭]?)(?:\s+([A-Za-z]+)|(m)\b)?", text)
     if not m:
         return ""
@@ -119,6 +121,11 @@ def _short(text):
     return text.strip(" ,")
 
 
+def _words(text, limit):
+    """_short(), then at most `limit` words, so one field cannot swamp a tag."""
+    return " ".join(_short(text).split()[:limit]).strip(" ,")
+
+
 def build_caption(spec):
     """ACE-Step reads a compact tag-style caption; stage directions only add noise."""
     c = spec["creative"]
@@ -128,7 +135,11 @@ def build_caption(spec):
     if vocals.get("required", True):
         parts.append(_short(vocals.get("singer", "")) + " vocals")
     else:
-        parts.append("instrumental")
+        # Without lyrics to anchor it, the caption is the only place the motif
+        # and the ending can reach ACE-Step.
+        parts += ["instrumental", "no vocals",
+                  _words(spec.get("arrangement", {}).get("motif", ""), 10),
+                  _words(c.get("ending", ""), 10)]
     parts += spec.get("metadata", {}).get("tags", [])
     seen, out = set(), []
     for p in parts:
@@ -178,12 +189,71 @@ def build_lyrics(spec):
     return "\n".join(lines).strip(), dropped
 
 
+def _energy_words(energy):
+    """ACE-Step reads words, not numbers: a 0-1 section energy becomes a feel."""
+    if energy is None:
+        return ""
+    energy = float(energy)
+    if energy < 0.35:
+        return "soft and sparse"
+    if energy < 0.65:
+        return "moderate"
+    return "driving and full"
+
+
+def _instrumental_tag(index, count, section):
+    """Section type for one arrangement section of an instrumental piece. A
+    recognised name (intro, outro, ...) wins; otherwise first is Intro, last is
+    Outro, and the middle reads as Verse when it carries energy, Interlude when
+    it breathes."""
+    low = re.sub(r"[_\-]+", " ", section.get("name", "").strip().lower())
+    for key, tag in SECTION_TAGS.items():
+        if low == key or low.startswith(key + " "):
+            return tag
+    if index == 0:
+        return "Intro"
+    if index == count - 1 and count > 1:
+        return "Outro"
+    energy = section.get("energy")
+    if energy is None:
+        return "Verse" if index % 2 else "Interlude"
+    if float(energy) >= 0.55:
+        return "Verse"
+    return "Interlude" if float(energy) < 0.35 else "Bridge"
+
+
+def build_instrumental_lyrics(spec):
+    """One descriptive tag line per arrangement section, e.g.
+    [Verse - instrumental, playful, driving and full, acoustic guitar, shaker].
+    ACE-Step follows these as the order of the piece, not as exact timings.
+    Falls back to a bare [Instrumental] when the spec has no arrangement."""
+    sections = spec.get("arrangement", {}).get("sections", [])
+    if not sections:
+        return "[Instrumental]"
+    lines = []
+    for i, s in enumerate(sections):
+        mood = (s.get("mood") or "").strip()
+        parts = ["instrumental", "" if mood.lower() == "neutral" else _words(mood, 4),
+                 _energy_words(s.get("energy")), _words(s.get("texture", ""), 6),
+                 _words(s.get("transition", ""), 6)]
+        # `purpose` is left out on purpose: it is a stage direction ("lift
+        # energy for the exchange"), and cut to tag length it reads as noise.
+        parts += [_short(x) for x in s.get("instruments", [])]
+        seen, out = set(), []
+        for p in parts:
+            if p and p.lower() not in seen:
+                seen.add(p.lower())
+                out.append(p)
+        lines += [f"[{_instrumental_tag(i, len(sections), s)} - {', '.join(out)}]", ""]
+    return "\n".join(lines).strip()
+
+
 def build_request(spec, seed=None, steps=8, duration=None, thinking=True, audio_format="wav"):
     c = spec["creative"]
     vocals = c.get("vocals", {})
     lyrics, dropped = build_lyrics(spec)
     if not vocals.get("required", True):
-        lyrics = "[Instrumental]"
+        lyrics = build_instrumental_lyrics(spec)
     ts = c.get("time_signature") or [4, 4]
     request = {
         "prompt": build_caption(spec),
