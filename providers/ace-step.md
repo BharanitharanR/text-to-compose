@@ -1,18 +1,16 @@
-<<<<<<< HEAD
 # ACE-Step 1.5 local provider
 
-Status: supported local provider
+Status: supported local provider (`scripts/ace_step.py`)
 
-ACE-Step 1.5 is an open-source local music-generation engine that can generate
-full songs from text and lyrics, including vocals. The upstream project provides
-a REST API and macOS Apple Silicon launch scripts.
+[ACE-Step 1.5](https://github.com/ACE-Step/ACE-Step-1.5) is an open-source local
+music-generation engine. It generates full songs with sung vocals from a style
+caption and section-tagged lyrics, and exposes a REST API. No account, API key or
+credits are needed for a default local install; songs stay on local disk.
 
 The skill keeps ACE-Step outside the canonical SongSpec. SongSpec remains the
 provider-neutral composition contract.
 
 ## Install on macOS Apple Silicon
-
-Use the upstream repository:
 
 ```bash
 git clone https://github.com/ACE-Step/ACE-Step-1.5.git
@@ -25,13 +23,10 @@ chmod +x start_gradio_ui_macos.sh start_api_server_macos.sh
 ./start_api_server_macos.sh
 ```
 
-The API is normally available at:
+On Linux or Windows with an NVIDIA GPU use `./start_api_server.sh`.
 
-```
-http://127.0.0.1:8001
-```
-
-The first run downloads the required model files.
+The API is normally available at `http://127.0.0.1:8001`. The first run
+downloads the model files (about 8 GB).
 
 For Apple Silicon, the upstream macOS launcher uses the MLX backend. The project
 also supports MPS/PyTorch and CPU fallback. On memory-constrained machines,
@@ -45,78 +40,42 @@ curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/v1/models
 ```
 
-## Test the skill adapter
+## Use the skill adapter
 
-From the text-to-compose repository:
+Dry run (no server needed; writes `outputs/ace-step-request.json`):
 
 ```bash
 python scripts/validate_song_spec.py examples/song-spec.json
 python scripts/ace_step.py examples/song-spec.json --out outputs --print
 ```
 
-That creates an inspectable ACE-Step request without generating audio.
-
-To generate:
+Generate:
 
 ```bash
-python scripts/ace_step.py examples/song-spec.json --out outputs --generate
+python scripts/ace_step.py examples/song-spec.json --out outputs --generate --seed 42
 ```
 
-The adapter submits SongSpec lyrics and musical direction to the local ACE-Step
-REST API, polls the task, and saves the returned MP3 under `outputs/`.
+The adapter submits the request to `/release_task`, polls `/query_result`, and
+saves `outputs/ace-step-song.wav` plus `outputs/ace-step-result.json`.
+
+Options:
+
+- `--seed` fixed seed for a repeatable render
+- `--steps` diffusion steps (default 8, for the turbo model)
+- `--duration` seconds, overriding the SongSpec
+- `--no-thinking` skip ACE-Step's planning LM (faster, usually weaker)
+- `--server` (alias `--api-url`) the API address
+- `--api-key` only if the local server requires authentication
+- `--model` a specific DiT model loaded by the server
+- `--timeout` seconds to wait for a render (default 1800)
 
 ## Environment variables
 
-```
+```bash
 export ACESTEP_API_URL=http://127.0.0.1:8001
 # Only needed if you configured ACE-Step with API-key authentication:
 export ACESTEP_API_KEY=...
 ```
-
-## Capability boundary
-
-- full_song: yes
-- vocals: yes
-- lyrics: yes
-- instrumentation/style: yes
-- local REST API: yes
-- hosted service required: no
-- API key required: no, unless the local server is configured to require one
-- commercial licensing: verify the current ACE-Step project/model license before commercial distribution
-
-The adapter is intentionally thin. Creative intelligence stays in Text-to-Compose
-and the canonical SongSpec; ACE-Step supplies audio generation.
-=======
-# ACE-Step provider
-
-Status: implemented local API adapter (`scripts/ace_step.py`)
-
-[ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) is an open-source music model that runs on the user's own machine. It generates full songs with sung vocals from a style caption and section-tagged lyrics. No account, API key or credits are needed; songs stay on local disk.
-
-## Setup (once)
-
-    git clone https://github.com/ace-step/ACE-Step-1.5.git
-    cd ACE-Step-1.5
-    uv sync
-
-Start the REST API server (first start downloads about 8 GB of model weights):
-
-    ./start_api_server_macos.sh   # Apple Silicon (MLX backend)
-    ./start_api_server.sh         # Linux / Windows with an NVIDIA GPU
-
-The server listens on `http://127.0.0.1:8001`. Set `ACESTEP_API_URL` to use another address.
-
-## Use
-
-Dry run (no server needed; writes `outputs/ace-step-request.json`):
-
-    python scripts/ace_step.py song-spec.json --out outputs --print
-
-Generate:
-
-    python scripts/ace_step.py song-spec.json --out outputs --generate --seed 42
-
-Options: `--steps` (default 8, turbo model), `--duration` (seconds, overrides the SongSpec), `--no-thinking` (skip ACE-Step's planning LM: faster, usually weaker).
 
 ## Mapping
 
@@ -125,18 +84,26 @@ SongSpec -> ACE-Step `/release_task`:
 | SongSpec | ACE-Step |
 |---|---|
 | creative.style, instruments, vocals.singer, metadata.tags | `prompt` (compact caption; parentheticals and stage directions dropped) |
+| instrumental specs: motif and ending | added to `prompt` with "no vocals" |
 | lyrics.sections in arrangement order | `lyrics` with `[Intro]`, `[Verse]`, `[Interlude]`, `[Outro]`... tags |
+| instrumental specs: arrangement sections | one tag line each: type, mood, energy as words, texture, transition, instruments |
 | creative.tempo | `bpm` |
-| creative.key_or_raga | `key_scale`; church modes fold to major/minor (Dorian -> minor). Ragas and free text are left to ACE-Step's LM |
+| creative.key_or_raga | `key_scale`; church modes fold to major/minor (Dorian -> minor), common ragas map via `Sa = X`. Other free text is left to ACE-Step's LM |
 | creative.time_signature | `time_signature` (numerator) |
 | metadata.duration_seconds, else section beats / BPM | `audio_duration` (10-600 s) |
 | vocals.language | `vocal_language` ISO code |
 
-The adapter turns off ACE-Step's caption and language rewriting (`use_cot_caption`, `use_cot_language`) because the SongSpec already holds those decisions. `thinking` stays on so ACE-Step's planning LM still shapes the audio.
+The adapter turns off ACE-Step's caption and language rewriting (`use_cot_caption`,
+`use_cot_language`) because the SongSpec already holds those decisions. `thinking`
+stays on so ACE-Step's planning LM still shapes the audio.
+
+ACE-Step reads the section tags as the order of the piece, not as exact timings.
 
 ## What ACE-Step cannot do
 
-- **Spoken narration.** It only sings. Sections marked `spoken` become instrumental `[Intro]`/`[Interlude]` slots, and the adapter reports their text as not rendered. Record the narrator separately (TTS or a person) and mix it over the intro if the piece needs it.
+- **Spoken narration.** It only sings. Sections marked `spoken` become instrumental
+  `[Intro]`/`[Interlude]` slots, and the adapter reports their text as not rendered.
+  Record the narrator separately (TTS or a person) and mix it over the intro.
 - **Exact melody.** It does not take the ABC score or motif; melody is the model's own.
 - **Separate ambience layers.** Ambience can only be suggested in the caption.
 - **Ragas and talas** are not first-class parameters; describe them in the caption.
@@ -150,14 +117,18 @@ The adapter turns off ACE-Step's caption and language rewriting (`use_cot_captio
 - spoken narration: no
 - melody/score control: no
 - reference audio / cover / repaint: yes in ACE-Step; not yet exposed by this adapter
+- local REST API: yes
+- hosted service required: no
+- API key required: no, unless the local server is configured to require one
 - runs offline: yes, after the model download
 - cost: none beyond local compute
+- commercial licensing: verify the current ACE-Step project/model license before commercial distribution
 
 ## Speed
 
-On an M2 Pro with 16 GB the turbo model with the 0.6B planning LM took several minutes per song. The first request after a server start also loads the models. Measured numbers for the A/B test are in `evals/`.
+On an M2 Pro with 16 GB the turbo model with the 0.6B planning LM took several
+minutes per song. The first request after a server start also loads the models.
+Measured numbers for the A/B test are in `evals/`.
 
-## Licence
-
-ACE-Step 1.5 is released under the MIT licence. Read the repository's licence and disclaimer section before commercial distribution of generated audio.
->>>>>>> ac11d31 (feat: add ACE-Step 1.5 local provider and A/B eval (v1.4.0))
+The adapter is intentionally thin. Creative intelligence stays in Text-to-Compose
+and the canonical SongSpec; ACE-Step supplies audio generation.

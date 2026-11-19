@@ -283,11 +283,22 @@ def build_request(spec, seed=None, steps=8, duration=None, thinking=True, audio_
 
 # ---------------------------------------------------------------- HTTP client
 
+# Only needed when the local ACE-Step server was started with API-key auth.
+API_KEY = os.environ.get("ACESTEP_API_KEY")
+
+
+def _headers(extra=None):
+    headers = dict(extra or {})
+    if API_KEY:
+        headers["Authorization"] = f"Bearer {API_KEY}"
+    return headers
+
+
 def _post(server, path, payload, timeout=60):
     req = urllib.request.Request(
         server.rstrip("/") + path,
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=_headers({"Content-Type": "application/json"}),
         method="POST",
     )
     try:
@@ -316,7 +327,8 @@ def generate(server, request, out_path, poll_seconds=3, timeout_seconds=1800):
             url = first["file"]
             if url.startswith("/"):
                 url = server.rstrip("/") + url
-            with urllib.request.urlopen(url, timeout=300) as r, open(out_path, "wb") as f:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=_headers()), timeout=300) as r, \
+                    open(out_path, "wb") as f:
                 f.write(r.read())
             first["task_id"] = task_id
             return first
@@ -332,12 +344,17 @@ def main():
     ap.add_argument("--out", default="outputs")
     ap.add_argument("--print", action="store_true", dest="print_request")
     ap.add_argument("--generate", action="store_true")
-    ap.add_argument("--server", default=DEFAULT_SERVER)
+    ap.add_argument("--server", "--api-url", dest="server", default=DEFAULT_SERVER)
+    ap.add_argument("--api-key", default=None, help="only if the local server requires auth (or set ACESTEP_API_KEY)")
+    ap.add_argument("--model", default=None, help="a specific DiT model loaded by the server")
     ap.add_argument("--seed", type=int)
     ap.add_argument("--steps", type=int, default=8)
     ap.add_argument("--duration", type=float)
+    ap.add_argument("--timeout", type=int, default=1800, help="seconds to wait for a render")
     ap.add_argument("--no-thinking", action="store_true")
     args = ap.parse_args()
+    global API_KEY
+    API_KEY = args.api_key or API_KEY
 
     with open(args.song_spec, encoding="utf-8") as f:
         spec = json.load(f)
@@ -345,6 +362,8 @@ def main():
         raise SystemExit("Unsupported SongSpec version; expected 1.0")
 
     request, notes = build_request(spec, args.seed, args.steps, args.duration, not args.no_thinking)
+    if args.model:
+        request["model"] = args.model
     os.makedirs(args.out, exist_ok=True)
     manifest = os.path.join(args.out, "ace-step-request.json")
     with open(manifest, "w", encoding="utf-8") as f:
@@ -363,7 +382,7 @@ def main():
 
     out_path = os.path.join(args.out, f"ace-step-song.{request['audio_format']}")
     t0 = time.time()
-    result = generate(args.server, request, out_path)
+    result = generate(args.server, request, out_path, timeout_seconds=args.timeout)
     print(f"ACE-Step audio -> {out_path} ({time.time() - t0:.0f}s, seed {result.get('seed_value', '?')})")
     with open(os.path.join(args.out, "ace-step-result.json"), "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
