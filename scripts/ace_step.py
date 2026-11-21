@@ -328,12 +328,13 @@ def _post(server, path, payload, timeout=60):
     return body["data"]
 
 
-def generate(server, request, out_path, poll_seconds=3, timeout_seconds=1800):
+def generate(server, request, out_path, poll_seconds=3, timeout_seconds=0):
     """Submit one task, wait for it, download the first audio file. Returns the result record."""
     task = _post(server, "/release_task", request)
     task_id = task["task_id"]
-    deadline = time.time() + timeout_seconds
-    while time.time() < deadline:
+    # timeout_seconds 0 (the default) means no limit: wait until ACE-Step finishes.
+    deadline = time.time() + timeout_seconds if timeout_seconds else None
+    while deadline is None or time.time() < deadline:
         rows = _post(server, "/query_result", {"task_id_list": [task_id]})
         row = rows[0] if rows else {}
         status = row.get("status")
@@ -367,7 +368,7 @@ def main():
     ap.add_argument("--seed", type=int)
     ap.add_argument("--steps", type=int, default=8)
     ap.add_argument("--duration", type=float)
-    ap.add_argument("--timeout", type=int, default=1800, help="seconds to wait for a render")
+    ap.add_argument("--timeout", type=int, default=0, help="seconds to wait for a render (0 = no limit)")
     ap.add_argument("--no-thinking", action="store_true")
     args = ap.parse_args()
     global API_KEY
