@@ -87,6 +87,7 @@ SongSpec -> ACE-Step `/release_task`:
 | instrumental specs: motif and ending | added to `prompt` with "no vocals" |
 | lyrics.sections in arrangement order | `lyrics` with `[Intro]`, `[Verse]`, `[Interlude]`, `[Outro]`... tags |
 | instrumental specs: arrangement sections | one tag line each: type, mood, energy as words, texture, transition, instruments |
+| extra.narration_bed (true) | caption adds "soft background bed under spoken voiceover, sparse, low-mid range kept clear, no lead melody, no vocals"; every section tag gets "no lead melody, low-mid clear" and energy words never read as driving or full |
 | creative.tempo | `bpm` |
 | creative.key_or_raga | `key_scale`; church modes fold to major/minor (Dorian -> minor), common ragas map via `Sa = X`. Other free text is left to ACE-Step's LM |
 | creative.time_signature | `time_signature` (numerator) |

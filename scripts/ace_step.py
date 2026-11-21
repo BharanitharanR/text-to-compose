@@ -126,6 +126,15 @@ def _words(text, limit):
     return " ".join(_short(text).split()[:limit]).strip(" ,")
 
 
+def is_narration_bed(spec):
+    """True when the music is a quiet bed under spoken voiceover (SongSpec extra.narration_bed)."""
+    return bool((spec.get("extra") or {}).get("narration_bed"))
+
+
+NARRATION_BED_CAPTION = ("soft background bed under spoken voiceover, sparse, "
+                         "low-mid range kept clear, no lead melody, no vocals")
+
+
 def build_caption(spec):
     """ACE-Step reads a compact tag-style caption; stage directions only add noise."""
     c = spec["creative"]
@@ -140,6 +149,8 @@ def build_caption(spec):
         parts += ["instrumental", "no vocals",
                   _words(spec.get("arrangement", {}).get("motif", ""), 10),
                   _words(c.get("ending", ""), 10)]
+    if is_narration_bed(spec):
+        parts += [NARRATION_BED_CAPTION]
     parts += spec.get("metadata", {}).get("tags", [])
     seen, out = set(), []
     for p in parts:
@@ -189,11 +200,14 @@ def build_lyrics(spec):
     return "\n".join(lines).strip(), dropped
 
 
-def _energy_words(energy):
-    """ACE-Step reads words, not numbers: a 0-1 section energy becomes a feel."""
+def _energy_words(energy, bed=False):
+    """ACE-Step reads words, not numbers: a 0-1 section energy becomes a feel.
+    Under a narration bed nothing reads as driving or full."""
     if energy is None:
-        return ""
+        return "soft and sparse, understated" if bed else ""
     energy = float(energy)
+    if bed:
+        return "soft and sparse, understated" if energy < 0.35 else "gentle, understated, sparse"
     if energy < 0.35:
         return "soft and sparse"
     if energy < 0.65:
@@ -230,14 +244,17 @@ def build_instrumental_lyrics(spec):
     sections = spec.get("arrangement", {}).get("sections", [])
     if not sections:
         return "[Instrumental]"
+    bed = is_narration_bed(spec)
     lines = []
     for i, s in enumerate(sections):
         mood = (s.get("mood") or "").strip()
         parts = ["instrumental", "" if mood.lower() == "neutral" else _words(mood, 4),
-                 _energy_words(s.get("energy")), _words(s.get("texture", ""), 6),
+                 _energy_words(s.get("energy"), bed), _words(s.get("texture", ""), 6),
                  _words(s.get("transition", ""), 6)]
         # `purpose` is left out on purpose: it is a stage direction ("lift
         # energy for the exchange"), and cut to tag length it reads as noise.
+        if bed:
+            parts += ["no lead melody", "low-mid clear"]
         parts += [_short(x) for x in s.get("instruments", [])]
         seen, out = set(), []
         for p in parts:
