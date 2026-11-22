@@ -200,69 +200,13 @@ def build_lyrics(spec):
     return "\n".join(lines).strip(), dropped
 
 
-def _energy_words(energy, bed=False):
-    """ACE-Step reads words, not numbers: a 0-1 section energy becomes a feel.
-    Under a narration bed nothing reads as driving or full."""
-    if energy is None:
-        return "soft and sparse, understated" if bed else ""
-    energy = float(energy)
-    if bed:
-        return "soft and sparse, understated" if energy < 0.35 else "gentle, understated, sparse"
-    if energy < 0.35:
-        return "soft and sparse"
-    if energy < 0.65:
-        return "moderate"
-    return "driving and full"
-
-
-def _instrumental_tag(index, count, section):
-    """Section type for one arrangement section of an instrumental piece. A
-    recognised name (intro, outro, ...) wins; otherwise first is Intro, last is
-    Outro, and the middle reads as Verse when it carries energy, Interlude when
-    it breathes."""
-    low = re.sub(r"[_\-]+", " ", section.get("name", "").strip().lower())
-    for key, tag in SECTION_TAGS.items():
-        if low == key or low.startswith(key + " "):
-            return tag
-    if index == 0:
-        return "Intro"
-    if index == count - 1 and count > 1:
-        return "Outro"
-    energy = section.get("energy")
-    if energy is None:
-        return "Verse" if index % 2 else "Interlude"
-    if float(energy) >= 0.55:
-        return "Verse"
-    return "Interlude" if float(energy) < 0.35 else "Bridge"
-
-
 def build_instrumental_lyrics(spec):
-    """One descriptive tag line per arrangement section, e.g.
-    [Verse - instrumental, playful, driving and full, acoustic guitar, shaker].
-    ACE-Step follows these as the order of the piece, not as exact timings.
-    Falls back to a bare [Instrumental] when the spec has no arrangement."""
-    sections = spec.get("arrangement", {}).get("sections", [])
-    if not sections:
-        return "[Instrumental]"
-    bed = is_narration_bed(spec)
-    lines = []
-    for i, s in enumerate(sections):
-        mood = (s.get("mood") or "").strip()
-        parts = ["instrumental", "" if mood.lower() == "neutral" else _words(mood, 4),
-                 _energy_words(s.get("energy"), bed), _words(s.get("texture", ""), 6),
-                 _words(s.get("transition", ""), 6)]
-        # `purpose` is left out on purpose: it is a stage direction ("lift
-        # energy for the exchange"), and cut to tag length it reads as noise.
-        if bed:
-            parts += ["no lead melody", "low-mid clear"]
-        parts += [_short(x) for x in s.get("instruments", [])]
-        seen, out = set(), []
-        for p in parts:
-            if p and p.lower() not in seen:
-                seen.add(p.lower())
-                out.append(p)
-        lines += [f"[{_instrumental_tag(i, len(sections), s)} - {', '.join(out)}]", ""]
-    return "\n".join(lines).strip()
+    """An instrumental song sends a bare [Instrumental] tag. ACE-Step sings
+    whatever is in the lyrics field: descriptive section tags such as
+    [Bridge - instrumental, curious, felt piano] came out as wordless vocals
+    (A/B checked 2026-11-22, same request and seed). Mood and instruments
+    reach ACE-Step through the caption (build_caption) instead."""
+    return "[Instrumental]"
 
 
 def build_request(spec, seed=None, steps=8, duration=None, thinking=True, audio_format="wav"):
