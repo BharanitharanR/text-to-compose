@@ -190,7 +190,10 @@ def build_lyrics(spec):
 
     lines, dropped = [], []
     for name, section in order:
-        lines.append(f"[{_tag(name)}]")
+        # A lyricist may give the engine tag for a native section name
+        # (Pallavi -> Chorus); otherwise map the name.
+        tag = (section or {}).get("engine_tag") or _tag(name)
+        lines.append(f"[{tag}]")
         if section and section.get("spoken"):
             # ACE-Step cannot speak: the slot stays instrumental.
             dropped.append({"section": section["name"], "text": section.get("text", "")})
